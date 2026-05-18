@@ -69,7 +69,7 @@ public class RelatorioRepository {
 
                 );
                 dadosUsuario.add(data);
-                System.out.println(data);
+
             }
             return dadosUsuario;
         } catch (SQLException e) {

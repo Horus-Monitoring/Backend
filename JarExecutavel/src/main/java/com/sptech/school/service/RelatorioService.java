@@ -30,7 +30,6 @@ public class RelatorioService {
         */
         Path caminho = Paths.get("C:\\Users\\ricar\\Downloads\\dashboard (2).json");
         if(Files.exists(caminho)) {
-            System.out.println("Arquivo encontrado.");
             return caminho;
         } else {
             throw new RuntimeException("Arquivo não encontrado.");
@@ -135,27 +134,25 @@ public class RelatorioService {
         return relatorioFinal.toString().trim();
     }
 
-    public Path salvarPDF(String textoRelatorio) throws IOException {
-        //Criando documento
+    public Path salvarPDF(String textoRelatorio, String usuario) throws IOException {
+
         try(PDDocument document = new PDDocument()) {
-            //Criando página
+
             PDPage page = new PDPage();
             document.addPage(page);
 
-            //Começando escrita
-            try(PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
+            try(PDPageContentStream contentStream =
+                        new PDPageContentStream(document, page)) {
 
                 contentStream.beginText();
 
-                //Fonte e tamanho do texto
-                contentStream.setFont(new PDType1Font(
-                                Standard14Fonts.FontName.HELVETICA),
-                        12);
+                contentStream.setFont(
+                        new PDType1Font(Standard14Fonts.FontName.HELVETICA),
+                        12
+                );
 
-                // posição inicial na página
                 contentStream.newLineAtOffset(50, 750);
 
-                //Escrita
                 String[] linhas = textoRelatorio.split("\n");
 
                 for(String linha : linhas){
@@ -166,13 +163,26 @@ public class RelatorioService {
                 contentStream.endText();
             }
 
-            //Salvar Relatório
-            document.save("relatorio_" + + System.currentTimeMillis()+ "pdf");
-            System.out.println("Documento salvo com sucesso.");
-            return Paths.get("relatorio.pdf");
+            Path pastaRelatorios = Paths.get("relatorios");
+
+            if (!Files.exists(pastaRelatorios)) {
+                Files.createDirectories(pastaRelatorios);
+            }
+
+            String nomeArquivo =
+                    usuario + "_" + System.currentTimeMillis() + ".pdf";
+
+            Path caminhoArquivo =
+                    pastaRelatorios.resolve(nomeArquivo);
+
+            document.save(caminhoArquivo.toFile());
+
+            return caminhoArquivo;
 
         } catch (IOException e) {
-            throw new IOException("Erro ao escrever o relatório:" + e);
+            throw new IOException(
+                    "Erro ao escrever o relatório: " + e.getMessage()
+            );
         }
     }
 

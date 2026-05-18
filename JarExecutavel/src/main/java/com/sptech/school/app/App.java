@@ -24,8 +24,10 @@ public class App {
         MySQLConnection conexao = new MySQLConnection();
 
         //Buscando dados no MySQL
+        String usuario =  args[0];
+        String servidor = args[1];
         RelatorioRepository data = new RelatorioRepository();
-        List<RelatorioData> dadosBanco = data.buscarDados("mariana@horus.com", "Nathan");
+        List<RelatorioData> dadosBanco = data.buscarDados(usuario, servidor);
 
         //Buscando dados no JSON
         RelatorioService relatorioService = new RelatorioService();
@@ -34,7 +36,7 @@ public class App {
 
         String relatorio = relatorioService.gerarTexto(json, dadosBanco);
 
-        System.out.println(relatorioService.salvarPDF(relatorio));
+        System.out.println(relatorioService.salvarPDF(relatorio, usuario));
 
         /*JSONObject json = new JSONObject();
 
