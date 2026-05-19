@@ -1,24 +1,24 @@
 package com.sptech.school.app;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.sptech.school.JarFinal;
-import com.sptech.school.config.Jira;
-import com.sptech.school.config.MySQLConnection;
-import com.sptech.school.config.Slack;
-import com.sptech.school.JarFinal;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.List;
-
-import com.sptech.school.service.RelatorioData;
-import com.sptech.school.service.RelatorioRepository;
-import com.sptech.school.service.RelatorioService;
-import org.json.JSONObject;
+import com.sptech.school.config.S3Provider;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.Bucket;
 
 
 public class App {
 
     public static void main(String[] args) throws Exception {
+
+        public static void main(String[] args) {
+
+            S3Service s3 = new S3Service();
+
+            s3.uploadArquivo(
+                    "teste.txt",
+                    "raw/teste.txt"
+            );
+        }
+        /* RELATÓRIO
 
         //Conexão com MySQL
         MySQLConnection conexao = new MySQLConnection();
@@ -36,9 +36,11 @@ public class App {
 
         String relatorio = relatorioService.gerarTexto(json, dadosBanco);
 
-        System.out.println(relatorioService.salvarPDF(relatorio, usuario));
+        System.out.println(relatorioService.salvarPDF(relatorio, usuario)); */
 
-        /*JSONObject json = new JSONObject();
+        /* CONEXÃO JIRA - SLACK
+
+        JSONObject json = new JSONObject();
 
         String baseUrl = "https://horusmonitoring.atlassian.net";
         String email = "horusmonitoring@outlook.com.br";
@@ -65,4 +67,4 @@ public class App {
         }*/
 
     }
-}
+
