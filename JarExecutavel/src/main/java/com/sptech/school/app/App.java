@@ -24,8 +24,8 @@ public class App {
         MySQLConnection conexao = new MySQLConnection();
 
         //Buscando dados no MySQL
-        String usuario =  args[0];
-        String servidor = args[1];
+        String usuario =  "ricardo@horus.com";
+        String servidor = "Nathan";
         RelatorioRepository data = new RelatorioRepository();
         List<RelatorioData> dadosBanco = data.buscarDados(usuario, servidor);
 
