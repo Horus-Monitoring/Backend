@@ -11,13 +11,13 @@ public class JarFinal {
     String nivelChamado = severidades[0];
     String nivelStatus = status[0];
     String evento;
+    String componente;
+    String servidor;
 
     public static final String[] severidades = {"Highest","High","Medium", "Low"};
     public static final String[] status = {"Online", "Offline", "Atenção", "Crítico"};
-    public static final String[] componentes = {"CPU", "RAM", "Disco"};
-    public static final String[] servidores = {"[Servidor 1] [ip : 192.168.1.1]",
-            "[Servidor 2] [ip : 192.168.1.2]",
-            "[Servidor 3] [ip : 192.168.1.3]"};
+    public static final String[] componentes = {"CPU", "RAM", "Disco", "Rede", "Temperatura", "Processos"};
+    public static final String[] servidores = {"srv-bd-01", "srv-app-02", "srv-atc-03"};
 
     public String logHardware() {
         Random random = new Random();
@@ -28,8 +28,8 @@ public class JarFinal {
         DateTimeFormatter data_hora = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
         String tempoReal = LocalDateTime.now().format(data_hora);
-        String tipoComponete = componentes[random.nextInt(componentes.length)];
-        String servidor = servidores[random.nextInt(servidores.length)];
+        componente = componentes[random.nextInt(componentes.length)];
+        servidor = servidores[random.nextInt(servidores.length)];
 
         if (valorComponente == 0){
             // servidor offline ou sem conexão
@@ -61,9 +61,9 @@ public class JarFinal {
             String valorFormatado = String.format("%.2f", valorComponente);
 
             String mensagem = "Severidade do incidente: " + nivelChamado + "\n" + servidor + "\nStatus do servidor: " +
-                    nivelStatus + "\n" + tipoComponete + " está com " + valorFormatado + "% de uso\n";
+                    nivelStatus + "\n" + componente + " está com " + valorFormatado + "% de uso\n";
 
-            evento = tipoComponete + " está com " + valorFormatado + "% de uso";
+            evento = componente + " está com " + valorFormatado + "% de uso";
             return mensagem;
         }
         return null;
@@ -77,5 +77,12 @@ public class JarFinal {
         return nivelChamado;
     }
 
+    public String getComponente() {
+        return componente;
+    }
+
+    public String getServidor() {
+        return servidor;
+    }
 }
 

@@ -51,7 +51,8 @@ public class Jira {
         throw new RuntimeException("Jira request failed: " + status + " - " + response.body());
     }
 
-    public String createIssue(String projectKey, String summary, String issueType, String priority) throws Exception {
+    public String createIssue(String projectKey, String summary, String issueType, String priority, String componente,
+                              String servidor) throws Exception {
         Map<String, Object> payload = Map.of(
                 "fields",
                 Map.of(
@@ -62,7 +63,12 @@ public class Jira {
                         "issuetype",
                         Map.of("name", issueType),
                         "priority",
-                        Map.of("name", priority)
+                        Map.of("name", priority),
+                        "labels",
+                        new String[]{
+                                componente.toLowerCase(),
+                                servidor.toLowerCase()
+                        }
                 )
         );
 

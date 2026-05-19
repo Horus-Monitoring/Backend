@@ -20,26 +20,26 @@ public class App {
 
     public static void main(String[] args) throws Exception {
 
-        //Conexão com MySQL
-        MySQLConnection conexao = new MySQLConnection();
-
-        //Buscando dados no MySQL
-        RelatorioRepository data = new RelatorioRepository();
-        List<RelatorioData> dadosBanco = data.buscarDados("mariana@horus.com", "Nathan");
-
-        //Buscando dados no JSON
-        RelatorioService relatorioService = new RelatorioService();
-        Path caminho = relatorioService.buscarJSON();
-        JsonNode json = relatorioService.lerJSON(caminho);
-
-        String relatorio = relatorioService.gerarTexto(json, dadosBanco);
-
-        System.out.println(relatorioService.salvarPDF(relatorio));
-
-        /*JSONObject json = new JSONObject();
+//        //Conexão com MySQL
+//        MySQLConnection conexao = new MySQLConnection();
+//
+//        //Buscando dados no MySQL
+//        RelatorioRepository data = new RelatorioRepository();
+//        List<RelatorioData> dadosBanco = data.buscarDados("mariana@horus.com", "Nathan");
+//
+//        //Buscando dados no JSON
+//        RelatorioService relatorioService = new RelatorioService();
+//        Path caminho = relatorioService.buscarJSON();
+//        JsonNode json = relatorioService.lerJSON(caminho);
+//
+//        String relatorio = relatorioService.gerarTexto(json, dadosBanco);
+//
+//        System.out.println(relatorioService.salvarPDF(relatorio));
+//
+        JSONObject json = new JSONObject();
 
         String baseUrl = "https://horusmonitoring.atlassian.net";
-        String email = "horusmonitoring@outlook.com.br";
+        String email = "vitoria.psilva@sptech.school";
         String apiToken = "";
         Jira jira = new Jira(baseUrl, email, apiToken);
 
@@ -54,13 +54,15 @@ public class App {
                         "KAN",
                         log.getEvento(),
                         "Task",
-                        log.getNivelChamado()
+                        log.getNivelChamado(),
+                        log.getComponente(),
+                        log.getServidor()
                 );
             }
 
-            Slack.sendMessage(json);
+            //Slack.sendMessage(json);
             Thread.sleep(10000);
-        }*/
+        }
 
     }
 }
