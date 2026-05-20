@@ -2,6 +2,7 @@ package com.sptech.school.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sptech.school.model.Relatorio;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -41,9 +42,9 @@ public class RelatorioService {
         return leitor.readTree(caminho.toFile());
     }
 
-    public String gerarTexto(JsonNode json, List<RelatorioData> mysql) {
+    public String gerarTexto(JsonNode json, List<Relatorio> mysql) {
 
-        RelatorioData infosUsuario = mysql.getFirst();
+        Relatorio infosUsuario = mysql.getFirst();
         StringBuilder relatorioFinal = new StringBuilder();
 
         relatorioFinal.append(String.format(
@@ -106,7 +107,7 @@ public class RelatorioService {
         DateTimeFormatter formatter =
                 DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-        for (RelatorioData r : mysql) {
+        for (Relatorio r : mysql) {
 
             relatorioFinal.append(String.format(
                     """

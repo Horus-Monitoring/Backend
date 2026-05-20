@@ -1,5 +1,6 @@
 package com.sptech.school.config;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.cdimascio.dotenv.Dotenv;
 
@@ -75,5 +76,60 @@ public class Jira {
                 .build();
 
         return sendRequest(request);
+    }
+
+    public String buscarStatusIssue(String issueKey) {
+
+        try {
+
+            HttpRequest request =
+                    HttpRequest.newBuilder()
+                            .uri(
+                                    URI.create(
+                                            baseUrl
+                                                    + "/rest/api/3/issue/"
+                                                    + issueKey
+                                    )
+                            )
+                            .timeout(Duration.ofSeconds(60))
+                            .header("Authorization", authHeader)
+                            .header("Accept", "application/json")
+                            .GET()
+                            .build();
+
+            HttpResponse<String> response =
+                    httpClient.send(
+                            request,
+                            HttpResponse.BodyHandlers.ofString()
+                    );
+
+            int statusCode = response.statusCode();
+
+            if(statusCode < 200 || statusCode >= 300){
+
+                throw new RuntimeException(
+                        "Erro Jira: "
+                                + statusCode
+                                + " - "
+                                + response.body()
+                );
+            }
+
+            JsonNode json =
+                    objectMapper.readTree(response.body());
+
+            return json
+                    .get("fields")
+                    .get("status")
+                    .get("name")
+                    .asText();
+
+        } catch (Exception e){
+
+            throw new RuntimeException(
+                    "Erro ao buscar status da issue: "
+                            + e.getMessage()
+            );
+        }
     }
 }

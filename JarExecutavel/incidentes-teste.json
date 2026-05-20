@@ -1,0 +1,11 @@
+[
+  {
+    "chave": "TESTE-123",
+    "titulo": "CPU em 99% no Servidor Web",
+    "statusAlerta": "Ativo",
+    "criticidade": "crítico",
+    "dataAlerta": "2023-10-25T14:30:00",
+    "fkServidor": 1,
+    "fkComponente": 2
+  }
+]

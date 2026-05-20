@@ -1,7 +1,11 @@
 package com.sptech.school.service;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.sptech.school.config.S3Connection;
-import com.sptech.school.config.S3Provider;
+import com.sptech.school.model.Incidente;
+import com.sptech.school.provider.S3Provider;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -10,15 +14,50 @@ import software.amazon.awssdk.services.s3.model.*;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 
 public class S3Service {
 
-    private static final S3Client client =
-            S3Provider.criarCliente();
+    private static final S3Client client = S3Provider.criarCliente();
 
-    private static final String bucket =
-            S3Connection.getBUCKET_NAME();
+    private static final String bucket = S3Connection.getBUCKET_NAME();
 
+    public List<Incidente> buscarIncidentes(String key){
+        try {
+
+            GetObjectRequest request =
+                    GetObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(key)
+                            .build();
+
+            ResponseBytes<GetObjectResponse> objeto =
+                    client.getObjectAsBytes(request);
+
+            String json =
+                    objeto.asString(StandardCharsets.UTF_8);
+
+            ObjectMapper mapper = new ObjectMapper();
+
+            // Registra o módulo para o Jackson entender o LocalDateTime do novo Incidente
+            mapper.registerModule(new JavaTimeModule());
+
+            // Evita quebra caso o JSON no S3 venha com campos antigos que não existem mais no Model
+            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+            return Arrays.asList(
+                    mapper.readValue(
+                            json,
+                            Incidente[].class
+                    )
+            );
+
+        } catch (Exception e) {
+
+            throw new RuntimeException("Erro ao processar JSON do S3: " + e.getMessage(), e);
+        }
+    } // <-- A chave extra que quebrava o código estava aqui e foi removida
 
     public static void uploadArquivo(String caminhoLocal,
                                      String chaveS3) {

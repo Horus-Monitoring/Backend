@@ -1,6 +1,7 @@
-package com.sptech.school.service;
+package com.sptech.school.repository;
 
 import com.sptech.school.config.MySQLConnection;
+import com.sptech.school.model.Relatorio;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -10,8 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RelatorioRepository {
-    public List<RelatorioData> buscarDados(String usuario, String hostname) throws SQLException {
-        List<RelatorioData> dadosUsuario = new ArrayList<>();
+    public List<Relatorio> buscarDados(String usuario, String hostname) throws SQLException {
+        List<Relatorio> dadosUsuario = new ArrayList<>();
 
         String mysql = """
                 SELECT f.nome,
@@ -51,7 +52,7 @@ public class RelatorioRepository {
             ps.setString(2, hostname);
             ResultSet rs = ps.executeQuery();
             while(rs.next()){
-                RelatorioData data = new RelatorioData(
+                Relatorio data = new Relatorio(
                         rs.getString("nome"),
                         rs.getString("cpf"),
                         rs.getString("funcao"),

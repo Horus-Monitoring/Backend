@@ -1,5 +1,6 @@
-package com.sptech.school.config;
+package com.sptech.school.provider;
 
+import com.sptech.school.config.S3Connection;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
