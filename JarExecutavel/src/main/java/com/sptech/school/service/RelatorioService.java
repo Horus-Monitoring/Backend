@@ -3,6 +3,7 @@ package com.sptech.school.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sptech.school.model.Relatorio;
+import com.sptech.school.repository.RelatorioRepository;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -16,35 +17,49 @@ import java.time.format.DateTimeFormatter;
 
 public class RelatorioService {
 
-    public void gerarRelatorio(String relatorio){
-        System.out.println("Gerando relatório...");
-    }
+    private S3Service s3Service = new S3Service(); // Instancie o S3Service
 
-    public Path buscarJSON(){
-        /*Path caminho = Paths.get(
-                "client",
-                "empresa_1",
-                "c0:35:32:c7:0b:59",
-                "dashboard.json"
-        );
-        Para buscar na S3?
-        */
-        Path caminho = Paths.get("C:\\Users\\ricar\\Downloads\\dashboard (2).json");
-        if(Files.exists(caminho)) {
-            return caminho;
-        } else {
-            throw new RuntimeException("Arquivo não encontrado.");
+    public void BotaoRelatorio(String usuario, String email, String hostname, String mac_address, Integer id) {
+        try {
+            // Monta o caminho dinâmico conforme a empresa e o servidor
+            String chaveS3 = String.format("client/empresa_%d/%s/dashboard.json", id, mac_address);
+
+            RelatorioService service = new RelatorioService();
+            service.processarRelatorio(email, hostname, chaveS3);
+
+        } catch (Exception e) {
+            System.err.println("Falha ao gerar relatório: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
-    public JsonNode lerJSON(Path caminho) throws IOException {
+    public JsonNode buscarDashboardDoS3(String chaveS3) throws IOException {
+        String jsonContent = s3Service.obterConteudoComoString(chaveS3);
         ObjectMapper leitor = new ObjectMapper();
-        return leitor.readTree(caminho.toFile());
+        return leitor.readTree(jsonContent);
+    }
+
+    public Path processarRelatorio(String usuario, String host, String chaveS3) throws Exception {
+        //Busca dados no banco
+        RelatorioRepository repo = new RelatorioRepository();
+        List<Relatorio> mysqlDados = repo.buscarDados(usuario, host);
+
+        //Busca o JSON no S3
+        JsonNode json = buscarDashboardDoS3(chaveS3);
+
+        //Gera o texto e salva PDF
+        String texto = gerarTexto(json, mysqlDados);
+
+        return salvarPDF(texto, usuario);
     }
 
     public String gerarTexto(JsonNode json, List<Relatorio> mysql) {
+        if (mysql == null || mysql.isEmpty()) {
+            System.out.println("deu ruim no banco");
+            return "Nenhum dado encontrado para gerar o relatório.";
+        }
 
-        Relatorio infosUsuario = mysql.getFirst();
+        Relatorio infosUsuario = mysql.get(0);
         StringBuilder relatorioFinal = new StringBuilder();
 
         relatorioFinal.append(String.format(
@@ -108,28 +123,31 @@ public class RelatorioService {
                 DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
         for (Relatorio r : mysql) {
-
-            relatorioFinal.append(String.format(
-                    """
-                    ----------------------------
-                    Data: %s
-                    Criticidade: %s
-                    Status servidor: %s
-                    Componente afetado: %s
-                    Limite definido: %s %s
-                    Situação alerta: %s
-                    
-                    """,
-                    r.getDataAlerta().format(formatter),
-                    r.getCriticidade(),
-                    r.getStatusServidor(),
-                    r.getTipoComponente(),
-                    r.getLimite(),
-                    r.getUnidadeMedida(),
-                    r.getStatusAlerta()
-            ));
+            if (r.getDataAlerta() != null) {
+                relatorioFinal.append(String.format(
+                        """
+                                ----------------------------
+                                Data: %s
+                                Criticidade: %s
+                                Status servidor: %s
+                                Componente afetado: %s
+                                Limite definido: %s %s
+                                Situação alerta: %s
+                                
+                                """,
+                        r.getDataAlerta().format(formatter),
+                        r.getCriticidade(),
+                        r.getStatusServidor(),
+                        r.getTipoComponente(),
+                        r.getLimite(),
+                        r.getUnidadeMedida(),
+                        r.getStatusAlerta()
+                ));
+            } else {
+                relatorioFinal.append("----------------------------\n")
+                        .append("Sem alertas registrados para este componente.\n\n");
+            }
         }
-
         relatorioFinal.append("Fim do relatório.");
 
         return relatorioFinal.toString().trim();

@@ -1,17 +1,54 @@
 package com.sptech.school.app;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.sptech.school.model.Incidente;
 import com.sptech.school.service.IncidentService;
+import com.sptech.school.service.RelatorioService;
+import com.sptech.school.service.S3Service;
 
-import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 
-    public class App {
-        public static void main(String[] args) {
+public class App {
+    public static void main(String[] args) {
+
+        System.out.println("Iniciando integração com S3...");
+
+        /*try {
+            // 1. Buscar os incidentes diretamente do S3
+            S3Service s3Service = new S3Service();
+
+            // O nome exato do arquivo como está salvo lá no seu bucket
+            String chaveDoArquivoNoS3 = "incidentes-teste.json";
+
+            System.out.println("Baixando JSON do S3...");
+            List<Incidente> incidentes = s3Service.buscarIncidentes(chaveDoArquivoNoS3);
+
+            System.out.println("Lidos " + incidentes.size() + " incidentes do S3.");
+
+            // 2. Processar (DB, Jira, Slack)
+            IncidentService incidentService = new IncidentService();
+            incidentService.processarIncidentes(incidentes);
+
+            // 3. Checar os resolvidos
+            System.out.println("Verificando atualizações no Jira...");
+            incidentService.verificarResolvidos();
+
+            System.out.println("Teste com S3 finalizado com sucesso!");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
+
+        RelatorioService simulacao = new RelatorioService();
+        simulacao.BotaoRelatorio(
+                "João Ricardo",             // usuario
+                "ricardo@horus.com",          // email
+                "Jortieke",                     // hostname
+                "c0:35:32:c7:0b:59",          // mac_address
+                1                             // id
+        );
+
+    }}
+        /*public static void main(String[] args) {
 
             System.out.println("Iniciando teste local...");
 
@@ -44,46 +81,7 @@ import java.util.List;
             }
         }
     }
-    /*package com.sptech.school;
-
-import com.sptech.school.model.Incidente;
-import com.sptech.school.service.IncidentService;
-import com.sptech.school.service.S3Service;
-
-import java.util.List;
-
-public class Main {
-    public static void main(String[] args) {
-
-        System.out.println("Iniciando integração com S3...");
-
-        try {
-            // 1. Buscar os incidentes diretamente do S3
-            S3Service s3Service = new S3Service();
-
-            // O nome exato do arquivo como está salvo lá no seu bucket
-            String chaveDoArquivoNoS3 = "incidentes-teste.json";
-
-            System.out.println("Baixando JSON do S3...");
-            List<Incidente> incidentes = s3Service.buscarIncidentes(chaveDoArquivoNoS3);
-
-            System.out.println("Lidos " + incidentes.size() + " incidentes do S3.");
-
-            // 2. Processar (DB, Jira, Slack)
-            IncidentService incidentService = new IncidentService();
-            incidentService.processarIncidentes(incidentes);
-
-            // 3. Checar os resolvidos
-            System.out.println("Verificando atualizações no Jira...");
-            incidentService.verificarResolvidos();
-
-            System.out.println("Teste com S3 finalizado com sucesso!");
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-}*/
+    /**/
            /* // Upload de texto
             S3Service.uploadTexto(
                     "Teste de integração Java + AWS S3",

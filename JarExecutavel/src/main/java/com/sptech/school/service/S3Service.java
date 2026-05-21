@@ -57,7 +57,7 @@ public class S3Service {
 
             throw new RuntimeException("Erro ao processar JSON do S3: " + e.getMessage(), e);
         }
-    } // <-- A chave extra que quebrava o código estava aqui e foi removida
+    }
 
     public static void uploadArquivo(String caminhoLocal,
                                      String chaveS3) {
@@ -87,6 +87,19 @@ public class S3Service {
                     "Erro ao fazer upload: "
                             + e.getMessage()
             );
+        }
+    }
+
+    public String obterConteudoComoString(String chaveS3) {
+        try {
+            GetObjectRequest request = GetObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(chaveS3)
+                    .build();
+            ResponseBytes<GetObjectResponse> objeto = client.getObjectAsBytes(request);
+            return objeto.asString(StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao ler arquivo do S3: " + e.getMessage());
         }
     }
 
