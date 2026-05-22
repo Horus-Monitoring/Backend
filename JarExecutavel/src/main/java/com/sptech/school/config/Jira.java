@@ -14,12 +14,12 @@ import java.util.Base64;
 import java.util.Map;
 
 public class Jira {
-    private final String baseUrl = Dotenv.configure().filename(".env.dev").load().get("JIRA_BASE_URL");
+    private final String baseUrl = Env.get("JIRA_BASE_URL");
     private final String authHeader;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
-    private final String apiToken = Dotenv.configure().filename(".env.dev").load().get("JIRA_API_TOKEN");
-    private final String email = Dotenv.configure().filename(".env.dev").load().get("JIRA_EMAIL");
+    private final String apiToken = Env.get("JIRA_API_TOKEN");
+    private final String email = Env.get("JIRA_EMAIL");
 
     public Jira() {
 

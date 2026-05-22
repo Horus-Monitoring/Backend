@@ -58,7 +58,7 @@ public class RelatorioService {
 
     public String gerarTexto(JsonNode json, List<Relatorio> mysql) {
         if (mysql == null || mysql.isEmpty()) {
-            System.out.println("Nenhum dado encontrado no banco para este usuário/servidor.");
+            System.err.println("Nenhum dado encontrado no banco para este usuário/servidor.");
             return "Nenhum dado encontrado para gerar o relatório.";
         }
 
@@ -186,6 +186,7 @@ public class RelatorioService {
             if (!Files.exists(pastaRelatorios)) {
                 Files.createDirectories(pastaRelatorios);
             }
+            usuario = usuario.replaceAll("[^a-zA-Z0-9_-]", "_");
 
             String nomeArquivo = usuario + "_" + System.currentTimeMillis() + ".pdf";
             Path caminhoArquivo = pastaRelatorios.resolve(nomeArquivo);

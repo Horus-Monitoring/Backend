@@ -11,7 +11,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 public class Slack {
 
     private static HttpClient client = HttpClient.newHttpClient();
-    private static final String URL = Dotenv.configure().filename(".env.dev").load().get("SLACK_URL");;
+    private static final String URL = Env.get("SLACK_URL");;
 
     public static void sendMessage(JSONObject content) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder(

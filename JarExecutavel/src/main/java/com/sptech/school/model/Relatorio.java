@@ -118,7 +118,7 @@ public class Relatorio {
 
     @Override
     public String toString() {
-        return "RelatorioData{" +
+        return "Relatorio{" +
                 "nome='" + nome + '\'' +
                 ", cpf='" + cpf + '\'' +
                 ", funcao='" + funcao + '\'' +

@@ -76,7 +76,6 @@ public class RelatorioRepository {
 
                 );
                 dadosUsuario.add(data);
-                System.out.println(data);
 
             }
             return dadosUsuario;
@@ -85,3 +84,4 @@ public class RelatorioRepository {
         }
     }
 }
+

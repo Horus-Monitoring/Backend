@@ -20,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 public class App {
 
     public static void main(String[] args) throws Exception {
-
         // -------------------------------------------------------
         // MODO RELATÓRIO
         // Chamado pelo Node.js via: java -jar relatorio.jar
@@ -44,18 +43,18 @@ public class App {
     private static void modoRelatorio(String[] args) {
         String usuario    = args[0];
         String email      = args[1];
-        String macAddress = args[2];
+        String macAddress = args[2].toLowerCase();
         String servidor   = args[3];
         int    idEmpresa  = Integer.parseInt(args[4]);
 
-        System.out.println("Gerando relatório para: " + email);
+        System.err.println("Gerando relatório para: " + email);
 
         try {
             RelatorioService service = new RelatorioService();
             Path caminhoPDF = service.BotaoRelatorio(usuario, email, servidor, macAddress, idEmpresa);
 
             // Imprime o caminho absoluto no stdout — o Node.js lê esse valor
-            System.out.println(caminhoPDF.toAbsolutePath().toString());
+            System.out.println(caminhoPDF.toAbsolutePath());
 
         } catch (Exception e) {
             System.err.println("Erro ao gerar relatório: " + e.getMessage());

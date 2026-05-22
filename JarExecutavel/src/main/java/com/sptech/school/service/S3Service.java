@@ -91,6 +91,7 @@ public class S3Service {
     }
 
     public String obterConteudoComoString(String chaveS3) {
+        System.err.println("KEY -> " + chaveS3);
         try {
             GetObjectRequest request = GetObjectRequest.builder()
                     .bucket(bucket)
