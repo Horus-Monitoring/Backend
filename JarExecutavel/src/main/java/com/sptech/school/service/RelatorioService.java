@@ -17,20 +17,22 @@ import java.time.format.DateTimeFormatter;
 
 public class RelatorioService {
 
-    private S3Service s3Service = new S3Service(); // Instancie o S3Service
+    private final S3Service s3Service = new S3Service();
 
-    public void BotaoRelatorio(String usuario, String email, String hostname, String mac_address, Integer id) {
-        try {
-            // Monta o caminho dinâmico conforme a empresa e o servidor
-            String chaveS3 = String.format("client/empresa_%d/%s/dashboard.json", id, mac_address);
+    /**
+     * Ponto de entrada chamado pelo App no modo relatório.
+     * Retorna o Path do PDF gerado para que o Node.js possa fazer o download.
+     */
+    public Path BotaoRelatorio(String usuario, String email,
+                               String hostname, String mac_address,
+                               Integer id) throws Exception {
 
-            RelatorioService service = new RelatorioService();
-            service.processarRelatorio(email, hostname, chaveS3);
+        // Monta o caminho do dashboard no S3
+        String chaveS3 = String.format(
+                "client/empresa_%d/%s/dashboard_rede_24h.json", id, mac_address
+        );
 
-        } catch (Exception e) {
-            System.err.println("Falha ao gerar relatório: " + e.getMessage());
-            e.printStackTrace();
-        }
+        return processarRelatorio(email, hostname, chaveS3);
     }
 
     public JsonNode buscarDashboardDoS3(String chaveS3) throws IOException {
@@ -39,15 +41,16 @@ public class RelatorioService {
         return leitor.readTree(jsonContent);
     }
 
-    public Path processarRelatorio(String usuario, String host, String chaveS3) throws Exception {
-        //Busca dados no banco
+    public Path processarRelatorio(String usuario, String host,
+                                   String chaveS3) throws Exception {
+        // Busca dados no banco
         RelatorioRepository repo = new RelatorioRepository();
         List<Relatorio> mysqlDados = repo.buscarDados(usuario, host);
 
-        //Busca o JSON no S3
+        // Busca o JSON no S3
         JsonNode json = buscarDashboardDoS3(chaveS3);
 
-        //Gera o texto e salva PDF
+        // Gera o texto e salva PDF
         String texto = gerarTexto(json, mysqlDados);
 
         return salvarPDF(texto, usuario);
@@ -55,7 +58,7 @@ public class RelatorioService {
 
     public String gerarTexto(JsonNode json, List<Relatorio> mysql) {
         if (mysql == null || mysql.isEmpty()) {
-            System.out.println("deu ruim no banco");
+            System.out.println("Nenhum dado encontrado no banco para este usuário/servidor.");
             return "Nenhum dado encontrado para gerar o relatório.";
         }
 
@@ -148,33 +151,30 @@ public class RelatorioService {
                         .append("Sem alertas registrados para este componente.\n\n");
             }
         }
-        relatorioFinal.append("Fim do relatório.");
 
+        relatorioFinal.append("Fim do relatório.");
         return relatorioFinal.toString().trim();
     }
 
     public Path salvarPDF(String textoRelatorio, String usuario) throws IOException {
 
-        try(PDDocument document = new PDDocument()) {
+        try (PDDocument document = new PDDocument()) {
 
             PDPage page = new PDPage();
             document.addPage(page);
 
-            try(PDPageContentStream contentStream =
-                        new PDPageContentStream(document, page)) {
+            try (PDPageContentStream contentStream =
+                         new PDPageContentStream(document, page)) {
 
                 contentStream.beginText();
-
                 contentStream.setFont(
                         new PDType1Font(Standard14Fonts.FontName.HELVETICA),
                         12
                 );
-
                 contentStream.newLineAtOffset(50, 750);
 
                 String[] linhas = textoRelatorio.split("\n");
-
-                for(String linha : linhas){
+                for (String linha : linhas) {
                     contentStream.showText(linha);
                     contentStream.newLineAtOffset(0, -15);
                 }
@@ -183,37 +183,18 @@ public class RelatorioService {
             }
 
             Path pastaRelatorios = Paths.get("relatorios");
-
             if (!Files.exists(pastaRelatorios)) {
                 Files.createDirectories(pastaRelatorios);
             }
 
-            String nomeArquivo =
-                    usuario + "_" + System.currentTimeMillis() + ".pdf";
-
-            Path caminhoArquivo =
-                    pastaRelatorios.resolve(nomeArquivo);
+            String nomeArquivo = usuario + "_" + System.currentTimeMillis() + ".pdf";
+            Path caminhoArquivo = pastaRelatorios.resolve(nomeArquivo);
 
             document.save(caminhoArquivo.toFile());
-
             return caminhoArquivo;
 
         } catch (IOException e) {
-            throw new IOException(
-                    "Erro ao escrever o relatório: " + e.getMessage()
-            );
+            throw new IOException("Erro ao escrever o relatório: " + e.getMessage());
         }
     }
-
-
-    /*
-
-    buscar o JSON (OK)
-    ler o JSON (OK)
-    buscar os dados no BD MySQL (OK)
-    juntar dados json e mysql (OK)
-    estruturar o texto do relatório (Ok)
-    salvar o PDF
-    enviar o PDF
-    **/
 }

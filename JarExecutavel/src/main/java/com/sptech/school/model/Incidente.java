@@ -11,6 +11,8 @@ public class Incidente {
     private String criticidade;
     private LocalDateTime dataAlerta;
     private LocalDateTime dataResolucao;
+    private String servidor;
+    private String componente;
     private Integer fkServidor;
     private Integer fkComponente;
 
@@ -20,7 +22,7 @@ public class Incidente {
     public Incidente() {
     }
 
-    public Incidente(Integer idRegistroAlerta, String chave, String titulo, String statusAlerta, String criticidade, LocalDateTime dataAlerta, LocalDateTime dataResolucao, Integer fkServidor, Integer fkComponente, String jiraKey) {
+    public Incidente(Integer idRegistroAlerta, String chave, String titulo, String statusAlerta, String criticidade, LocalDateTime dataAlerta, LocalDateTime dataResolucao, String servidor, String componente, String jiraKey) {
         this.idRegistroAlerta = idRegistroAlerta;
         this.chave = chave;
         this.titulo = titulo;
@@ -28,8 +30,9 @@ public class Incidente {
         this.criticidade = criticidade;
         this.dataAlerta = dataAlerta;
         this.dataResolucao = dataResolucao;
-        this.fkServidor = fkServidor;
-        this.fkComponente = fkComponente;
+        this.servidor = servidor;
+        this.componente = componente;
+        this.jiraKey = jiraKey;
     }
 
     public Integer getIdRegistroAlerta() {
@@ -86,6 +89,30 @@ public class Incidente {
 
     public void setDataResolucao(LocalDateTime dataResolucao) {
         this.dataResolucao = dataResolucao;
+    }
+
+    public String getServidor() {
+        return servidor;
+    }
+
+    public void setServidor(String servidor) {
+        this.servidor = servidor;
+    }
+
+    public String getComponente() {
+        return componente;
+    }
+
+    public void setComponente(String componente) {
+        this.componente = componente;
+    }
+
+    public String getJiraKey() {
+        return jiraKey;
+    }
+
+    public void setJiraKey(String jiraKey) {
+        this.jiraKey = jiraKey;
     }
 
     public Integer getFkServidor() {

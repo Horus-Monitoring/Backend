@@ -9,21 +9,25 @@ import java.util.List;
 
 public class IncidenteRepository {
 
-    // Agora verifica pela 'chave' (que é a sua JiraKey)
-    public boolean existe(String chave){
+    public boolean existe(String titulo, Integer fkServidor, Integer fkComponente){
 
         String sql = """
-                SELECT id_registro_alerta
-                FROM registro_alerta
-                WHERE chave = ?
-                """;
+            SELECT id_registro_alerta
+            FROM registro_alerta
+            WHERE titulo = ?
+            AND fk_servidor = ?
+            AND fk_componente = ?
+            AND status_alerta = 'Ativo'
+            """;
 
         try(
                 Connection conn = MySQLConnection.conectar();
                 PreparedStatement ps = conn.prepareStatement(sql)
         ){
 
-            ps.setString(1, chave);
+            ps.setString(1, titulo);
+            ps.setInt(2, fkServidor);
+            ps.setInt(3, fkComponente);
 
             ResultSet rs = ps.executeQuery();
 
@@ -38,6 +42,70 @@ public class IncidenteRepository {
         }
     }
 
+    public Integer buscarIdServidor(String hostname) {
+
+        String sql = """
+            
+                SELECT id_servidor
+            FROM servidor
+            WHERE hostname = ?
+            """;
+
+        try(
+                Connection conn = MySQLConnection.conectar();
+                PreparedStatement ps = conn.prepareStatement(sql)
+        ){
+
+            ps.setString(1, hostname);
+
+            ResultSet rs = ps.executeQuery(); if(rs.next()){
+                return rs.getInt("id_servidor");
+            }
+
+            return null;
+
+        } catch (SQLException e){
+
+            throw new RuntimeException(
+                    "Erro ao buscar servidor: "
+                            + e.getMessage()
+            );
+        }
+
+    }
+
+    public Integer buscarIdComponente(String componente){
+
+        String sql = """
+            SELECT id_componente
+            FROM componente
+            WHERE tipo = ?
+            """;
+
+        try(
+                Connection conn = MySQLConnection.conectar();
+                PreparedStatement ps = conn.prepareStatement(sql)
+        ){
+
+            ps.setString(1, componente);
+
+            ResultSet rs = ps.executeQuery();
+
+            if(rs.next()){
+                return rs.getInt("id_componente");
+            }
+
+            return null;
+
+        } catch (SQLException e){
+
+            throw new RuntimeException(
+                    "Erro ao buscar componente: "
+                            + e.getMessage()
+            );
+        }
+    }
+
     public void salvar(Incidente incidente){
 
         String sql = """
@@ -46,11 +114,10 @@ public class IncidenteRepository {
                     titulo,
                     status_alerta,
                     criticidade,
-                    data_alerta,
                     fk_servidor,
                     fk_componente
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?)
                 """;
 
         try(
@@ -65,24 +132,17 @@ public class IncidenteRepository {
             ps.setString(3, incidente.getStatusAlerta() != null ? incidente.getStatusAlerta() : "Ativo");
             ps.setString(4, incidente.getCriticidade());
 
-            ps.setTimestamp(
-                    5,
-                    Timestamp.valueOf(
-                            incidente.getDataAlerta()
-                    )
-            );
-
             // Verificação de segurança para as Foreign Keys (para evitar NullPointerException)
             if (incidente.getFkServidor() != null) {
-                ps.setInt(6, incidente.getFkServidor());
+                ps.setInt(5, incidente.getFkServidor());
             } else {
-                ps.setNull(6, Types.INTEGER);
+                ps.setNull(5, Types.INTEGER);
             }
 
             if (incidente.getFkComponente() != null) {
-                ps.setInt(7, incidente.getFkComponente());
+                ps.setInt(6, incidente.getFkComponente());
             } else {
-                ps.setNull(7, Types.INTEGER);
+                ps.setNull(6, Types.INTEGER);
             }
 
             ps.executeUpdate();

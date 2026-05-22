@@ -18,8 +18,25 @@ public class IncidentService {
 
         for(Incidente incidente : incidentes){
 
+            Integer idServidor =
+                    repository.buscarIdServidor(
+                            incidente.getServidor()
+                    );
+
+            Integer idComponente =
+                    repository.buscarIdComponente(
+                            incidente.getComponente()
+                    );
+
+            incidente.setFkServidor(idServidor);
+            incidente.setFkComponente(idComponente);
+
             try {
-                boolean existe = repository.existe(incidente.getChave());
+                boolean existe = repository.existe(
+                        incidente.getTitulo(),
+                        idServidor,
+                        idComponente
+                );
 
                 if(existe){
                     System.out.println("Incidente já registrado.");
@@ -32,7 +49,9 @@ public class IncidentService {
                         "KAN",
                         incidente.getTitulo(),
                         "Task",
-                        prioridade
+                        prioridade,
+                        incidente.getComponente(),
+                        incidente.getServidor()
                 );
 
                 String jiraKey = extrairKeyJira(respostaJira);
@@ -56,7 +75,7 @@ public class IncidentService {
                         """.formatted(
                                 incidente.getTitulo(),
                                 incidente.getCriticidade(),
-                                incidente.getFkServidor(),
+                                incidente.getServidor(),
                                 jiraKey
                         )
                 );

@@ -4,165 +4,142 @@ import com.sptech.school.model.Incidente;
 import com.sptech.school.service.IncidentService;
 import com.sptech.school.service.RelatorioService;
 import com.sptech.school.service.S3Service;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.S3Object;
+import com.sptech.school.provider.S3Provider;
+import com.sptech.school.config.S3Connection;
 
+import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class App {
-    public static void main(String[] args) {
 
-        System.out.println("Iniciando integração com S3...");
+    public static void main(String[] args) throws Exception {
 
-        /*try {
-            // 1. Buscar os incidentes diretamente do S3
-            S3Service s3Service = new S3Service();
+        // -------------------------------------------------------
+        // MODO RELATÓRIO
+        // Chamado pelo Node.js via: java -jar relatorio.jar
+        //     <usuario> <email> <mac_address> <servidor> <id_empresa>
+        // -------------------------------------------------------
+        if (args.length == 5) {
+            modoRelatorio(args);
+            return;
+        }
 
-            // O nome exato do arquivo como está salvo lá no seu bucket
-            String chaveDoArquivoNoS3 = "incidentes-teste.json";
+        // -------------------------------------------------------
+        // MODO DAEMON — loop de escaneamento do S3 a cada 1 hora
+        // -------------------------------------------------------
+        System.out.println("Iniciando daemon de monitoramento S3...");
+        modoDaemon();
+    }
 
-            System.out.println("Baixando JSON do S3...");
-            List<Incidente> incidentes = s3Service.buscarIncidentes(chaveDoArquivoNoS3);
+    // ------------------------------------------------------------------
+    // MODO RELATÓRIO
+    // ------------------------------------------------------------------
+    private static void modoRelatorio(String[] args) {
+        String usuario    = args[0];
+        String email      = args[1];
+        String macAddress = args[2];
+        String servidor   = args[3];
+        int    idEmpresa  = Integer.parseInt(args[4]);
 
-            System.out.println("Lidos " + incidentes.size() + " incidentes do S3.");
+        System.out.println("Gerando relatório para: " + email);
 
-            // 2. Processar (DB, Jira, Slack)
-            IncidentService incidentService = new IncidentService();
-            incidentService.processarIncidentes(incidentes);
+        try {
+            RelatorioService service = new RelatorioService();
+            Path caminhoPDF = service.BotaoRelatorio(usuario, email, servidor, macAddress, idEmpresa);
 
-            // 3. Checar os resolvidos
-            System.out.println("Verificando atualizações no Jira...");
-            incidentService.verificarResolvidos();
-
-            System.out.println("Teste com S3 finalizado com sucesso!");
+            // Imprime o caminho absoluto no stdout — o Node.js lê esse valor
+            System.out.println(caminhoPDF.toAbsolutePath().toString());
 
         } catch (Exception e) {
+            System.err.println("Erro ao gerar relatório: " + e.getMessage());
             e.printStackTrace();
-        }*/
-
-        RelatorioService simulacao = new RelatorioService();
-        simulacao.BotaoRelatorio(
-                "João Ricardo",             // usuario
-                "ricardo@horus.com",          // email
-                "Jortieke",                     // hostname
-                "c0:35:32:c7:0b:59",          // mac_address
-                1                             // id
-        );
-
-    }}
-        /*public static void main(String[] args) {
-
-            System.out.println("Iniciando teste local...");
-
-            try {
-                // 1. Ler o arquivo JSON local (Simulando o S3)
-                ObjectMapper mapper = new ObjectMapper();
-                mapper.registerModule(new JavaTimeModule());
-                mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
-                File arquivoJson = new File("incidentes-teste.json");
-
-                List<Incidente> incidentes = Arrays.asList(
-                        mapper.readValue(arquivoJson, Incidente[].class)
-                );
-
-                System.out.println("Lidos " + incidentes.size() + " incidentes do arquivo local.");
-
-                // 2. Processar os incidentes (Salvar no DB, Criar Jira, Enviar Slack)
-                IncidentService incidentService = new IncidentService();
-                incidentService.processarIncidentes(incidentes);
-
-                // 3. Verificar incidentes já abertos e atualizar status se resolvidos no Jira
-                System.out.println("Verificando se há issues resolvidas no Jira...");
-                incidentService.verificarResolvidos();
-
-                System.out.println("Teste local finalizado com sucesso!");
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            System.exit(1);
         }
     }
-    /**/
-           /* // Upload de texto
-            S3Service.uploadTexto(
-                    "Teste de integração Java + AWS S3",
-                    "raw/teste.txt"
-            );
 
-            // Ler arquivo
-            S3Service.lerArquivo(
-                    "raw/teste.txt"
-            );
+    // ------------------------------------------------------------------
+    // MODO DAEMON
+    // ------------------------------------------------------------------
+    private static void modoDaemon() {
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
-            // Verificar existência
-            S3Service.arquivoExiste(
-                    "raw/teste.txt"
-            );
+        // Executa imediatamente e depois a cada 1 hora
+        scheduler.scheduleAtFixedRate(
+                App::escanearS3,
+                0,
+                1,
+                TimeUnit.HOURS
+        );
 
-            // Listar arquivos
-            S3Service.listarArquivos(
-                    "raw/"
-            );
+        // Mantém a JVM viva
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Encerrando daemon...");
+            scheduler.shutdownNow();
+        }));
+    }
 
-            // Download
-            S3Service.baixarArquivo(
-                    "raw/teste.txt",
-                    "download_teste.txt"
-            );
+    // ------------------------------------------------------------------
+    // ESCANEAMENTO DO S3
+    // Varre o prefixo "client/" procurando arquivos de incidentes
+    // Estrutura esperada: client/empresa_<id>/<mac_address>/incidentes.json
+    // ------------------------------------------------------------------
+    private static void escanearS3() {
+        System.out.println("Iniciando varredura S3 em: " + java.time.LocalDateTime.now());
 
-            // Upload de arquivo local
-            S3Service.uploadArquivo(
-                    "download_teste.txt",
-                    "backup/download_teste.txt"
-            );
-        }
-    }*/
-        /* RELATÓRIO
+        try {
+            S3Client s3         = S3Provider.criarCliente();
+            String   bucket     = S3Connection.getBUCKET_NAME();
+            String   prefixo    = "client/";
 
-        //Conexão com MySQL
-        MySQLConnection conexao = new MySQLConnection();
+            ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                    .bucket(bucket)
+                    .prefix(prefixo)
+                    .build();
 
-        //Buscando dados no MySQL
-        String usuario =  "ricardo@horus.com";
-        String servidor = "Nathan";
-        RelatorioRepository data = new RelatorioRepository();
-        List<RelatorioData> dadosBanco = data.buscarDados(usuario, servidor);
+            ListObjectsV2Response listResponse = s3.listObjectsV2(listRequest);
 
-        //Buscando dados no JSON
-        RelatorioService relatorioService = new RelatorioService();
-        Path caminho = relatorioService.buscarJSON();
-        JsonNode json = relatorioService.lerJSON(caminho);
+            S3Service       s3Service       = new S3Service();
+            IncidentService incidentService = new IncidentService();
 
-        String relatorio = relatorioService.gerarTexto(json, dadosBanco);
+            for (S3Object objeto : listResponse.contents()) {
 
-        System.out.println(relatorioService.salvarPDF(relatorio, usuario)); */
+                String chave = objeto.key();
 
-        /* CONEXÃO JIRA - SLACK
+                // Processa apenas arquivos de incidentes
+                if (!chave.endsWith("incidentes.json")) {
+                    continue;
+                }
 
-        JSONObject json = new JSONObject();
+                System.out.println("Processando: " + chave);
 
-        String baseUrl = "https://horusmonitoring.atlassian.net";
-        String email = "horusmonitoring@outlook.com.br";
-        String apiToken = "";
-        Jira jira = new Jira(baseUrl, email, apiToken);
+                try {
+                    List<Incidente> incidentes = s3Service.buscarIncidentes(chave);
 
-        while (true){
-            JarFinal log = new JarFinal();
-            String mensagem = log.logHardware();
-            json.put("text", mensagem);
-            System.out.println(mensagem);
+                    System.out.println(incidentes.size() + " incidente(s) encontrado(s) em " + chave);
 
-            if(mensagem != null){
-                String response = jira.createIssue(
-                        "KAN",
-                        log.getEvento(),
-                        "Task",
-                        log.getNivelChamado()
-                );
+                    incidentService.processarIncidentes(incidentes);
+
+                } catch (Exception e) {
+                    System.err.println("Erro ao processar " + chave + ": " + e.getMessage());
+                }
             }
 
-            Slack.sendMessage(json);
-            Thread.sleep(10000);
-        }*/
+            // Verifica se algum incidente aberto foi resolvido no Jira
+            System.out.println("Verificando incidentes resolvidos no Jira...");
+            incidentService.verificarResolvidos();
 
+            System.out.println("Varredura concluída.");
 
-
+        } catch (Exception e) {
+            System.err.println("Erro na varredura S3: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+}
