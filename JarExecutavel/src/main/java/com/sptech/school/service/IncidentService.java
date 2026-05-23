@@ -18,15 +18,38 @@ public class IncidentService {
 
         for(Incidente incidente : incidentes){
 
+            String servidor = incidente.getServidor();
+            String componente = incidente.getComponente();
+
+            System.out.println("Servidor recebido: [" + servidor + "]");
+            System.out.println("Componente recebido: [" + componente + "]");
+
             Integer idServidor =
                     repository.buscarIdServidor(
-                            incidente.getServidor()
+                            servidor
                     );
 
             Integer idComponente =
                     repository.buscarIdComponente(
-                            incidente.getComponente()
+                            componente
                     );
+
+            System.out.println("ID servidor: " + idServidor);
+            System.out.println("ID componente: " + idComponente);
+
+            if(idServidor == null){
+                System.out.println(
+                        "Servidor não encontrado no banco."
+                );
+                continue;
+            }
+
+            if(idComponente == null){
+                System.out.println(
+                        "Componente não encontrado no banco."
+                );
+                continue;
+            }
 
             incidente.setFkServidor(idServidor);
             incidente.setFkComponente(idComponente);

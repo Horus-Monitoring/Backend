@@ -34,6 +34,7 @@ public class App {
         // MODO DAEMON — loop de escaneamento do S3 a cada 1 hora
         // -------------------------------------------------------
         System.out.println("Iniciando daemon de monitoramento S3...");
+        System.out.println(S3Connection.getACCESS_KEY());
         modoDaemon();
     }
 
@@ -95,7 +96,7 @@ public class App {
         try {
             S3Client s3         = S3Provider.criarCliente();
             String   bucket     = S3Connection.getBUCKET_NAME();
-            String   prefixo    = "client/";
+            String   prefixo    = "client/alertas/";
 
             ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
                     .bucket(bucket)
@@ -109,10 +110,13 @@ public class App {
 
             for (S3Object objeto : listResponse.contents()) {
 
+                System.out.println("Listando objetos");
+                System.out.println(objeto);
+
                 String chave = objeto.key();
 
                 // Processa apenas arquivos de incidentes
-                if (!chave.endsWith("incidentes.json")) {
+                if (!chave.endsWith("incidentes_rede_24h.json")) { // inserir novas keys com && !
                     continue;
                 }
 

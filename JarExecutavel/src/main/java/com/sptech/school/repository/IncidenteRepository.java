@@ -79,7 +79,7 @@ public class IncidenteRepository {
         String sql = """
             SELECT id_componente
             FROM componente
-            WHERE tipo = ?
+            WHERE UPPER(TRIM(tipo)) = UPPER(TRIM(?))
             """;
 
         try(
