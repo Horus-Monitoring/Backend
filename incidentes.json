@@ -1,0 +1,26 @@
+[
+  {
+    "titulo": "CPU acima de 95%",
+    "criticidade": "crítico",
+    "descricao": "Uso da CPU permaneceu acima de 95% por mais de 10 minutos.",
+    "componente": "CPU",
+    "servidor": "NeithaNitro",
+    "statusAlerta": "Ativo"
+  },
+  {
+    "titulo": "Memória RAM acima de 90%",
+    "criticidade": "alto",
+    "descricao": "Consumo de memória excedeu o limite configurado.",
+    "componente": "RAM",
+    "servidor": "NeithaNitro",
+    "statusAlerta": "Ativo"
+  },
+  {
+    "titulo": "Disco crítico abaixo de 5% livre",
+    "criticidade": "crítico",
+    "descricao": "Partição /dev/sda1 está com menos de 5% de espaço disponível.",
+    "componente": "DISCO",
+    "servidor": "Jortieke",
+    "statusAlerta": "Ativo"
+  }
+]

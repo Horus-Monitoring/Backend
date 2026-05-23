@@ -2,6 +2,8 @@ package com.sptech.school.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sptech.school.model.Relatorio;
+import com.sptech.school.repository.RelatorioRepository;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -15,36 +17,52 @@ import java.time.format.DateTimeFormatter;
 
 public class RelatorioService {
 
-    public void gerarRelatorio(String relatorio){
-        System.out.println("Gerando relatório...");
-    }
+    private final S3Service s3Service = new S3Service();
 
-    public Path buscarJSON(){
-        /*Path caminho = Paths.get(
-                "client",
-                "empresa_1",
-                "c0:35:32:c7:0b:59",
-                "dashboard.json"
+    /**
+     * Ponto de entrada chamado pelo App no modo relatório.
+     * Retorna o Path do PDF gerado para que o Node.js possa fazer o download.
+     */
+    public Path BotaoRelatorio(String usuario, String email,
+                               String hostname, String mac_address,
+                               Integer id) throws Exception {
+
+        // Monta o caminho do dashboard no S3
+        String chaveS3 = String.format(
+                "client/empresa_%d/%s/dashboard_rede_24h.json", id, mac_address
         );
-        Para buscar na S3?
-        */
-        Path caminho = Paths.get("C:\\Users\\ricar\\Downloads\\dashboard (2).json");
-        if(Files.exists(caminho)) {
-            System.out.println("Arquivo encontrado.");
-            return caminho;
-        } else {
-            throw new RuntimeException("Arquivo não encontrado.");
-        }
+
+        return processarRelatorio(email, hostname, chaveS3);
     }
 
-    public JsonNode lerJSON(Path caminho) throws IOException {
+    public JsonNode buscarDashboardDoS3(String chaveS3) throws IOException {
+        String jsonContent = s3Service.obterConteudoComoString(chaveS3);
         ObjectMapper leitor = new ObjectMapper();
-        return leitor.readTree(caminho.toFile());
+        return leitor.readTree(jsonContent);
     }
 
-    public String gerarTexto(JsonNode json, List<RelatorioData> mysql) {
+    public Path processarRelatorio(String usuario, String host,
+                                   String chaveS3) throws Exception {
+        // Busca dados no banco
+        RelatorioRepository repo = new RelatorioRepository();
+        List<Relatorio> mysqlDados = repo.buscarDados(usuario, host);
 
-        RelatorioData infosUsuario = mysql.getFirst();
+        // Busca o JSON no S3
+        JsonNode json = buscarDashboardDoS3(chaveS3);
+
+        // Gera o texto e salva PDF
+        String texto = gerarTexto(json, mysqlDados);
+
+        return salvarPDF(texto, usuario);
+    }
+
+    public String gerarTexto(JsonNode json, List<Relatorio> mysql) {
+        if (mysql == null || mysql.isEmpty()) {
+            System.err.println("Nenhum dado encontrado no banco para este usuário/servidor.");
+            return "Nenhum dado encontrado para gerar o relatório.";
+        }
+
+        Relatorio infosUsuario = mysql.get(0);
         StringBuilder relatorioFinal = new StringBuilder();
 
         relatorioFinal.append(String.format(
@@ -107,58 +125,56 @@ public class RelatorioService {
         DateTimeFormatter formatter =
                 DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-        for (RelatorioData r : mysql) {
-
-            relatorioFinal.append(String.format(
-                    """
-                    ----------------------------
-                    Data: %s
-                    Criticidade: %s
-                    Status servidor: %s
-                    Componente afetado: %s
-                    Limite definido: %s %s
-                    Situação alerta: %s
-                    
-                    """,
-                    r.getDataAlerta().format(formatter),
-                    r.getCriticidade(),
-                    r.getStatusServidor(),
-                    r.getTipoComponente(),
-                    r.getLimite(),
-                    r.getUnidadeMedida(),
-                    r.getStatusAlerta()
-            ));
+        for (Relatorio r : mysql) {
+            if (r.getDataAlerta() != null) {
+                relatorioFinal.append(String.format(
+                        """
+                                ----------------------------
+                                Data: %s
+                                Criticidade: %s
+                                Status servidor: %s
+                                Componente afetado: %s
+                                Limite definido: %s %s
+                                Situação alerta: %s
+                                
+                                """,
+                        r.getDataAlerta().format(formatter),
+                        r.getCriticidade(),
+                        r.getStatusServidor(),
+                        r.getTipoComponente(),
+                        r.getLimite(),
+                        r.getUnidadeMedida(),
+                        r.getStatusAlerta()
+                ));
+            } else {
+                relatorioFinal.append("----------------------------\n")
+                        .append("Sem alertas registrados para este componente.\n\n");
+            }
         }
 
         relatorioFinal.append("Fim do relatório.");
-
         return relatorioFinal.toString().trim();
     }
 
-    public Path salvarPDF(String textoRelatorio) throws IOException {
-        //Criando documento
-        try(PDDocument document = new PDDocument()) {
-            //Criando página
+    public Path salvarPDF(String textoRelatorio, String usuario) throws IOException {
+
+        try (PDDocument document = new PDDocument()) {
+
             PDPage page = new PDPage();
             document.addPage(page);
 
-            //Começando escrita
-            try(PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
+            try (PDPageContentStream contentStream =
+                         new PDPageContentStream(document, page)) {
 
                 contentStream.beginText();
-
-                //Fonte e tamanho do texto
-                contentStream.setFont(new PDType1Font(
-                                Standard14Fonts.FontName.HELVETICA),
-                        12);
-
-                // posição inicial na página
+                contentStream.setFont(
+                        new PDType1Font(Standard14Fonts.FontName.HELVETICA),
+                        12
+                );
                 contentStream.newLineAtOffset(50, 750);
 
-                //Escrita
                 String[] linhas = textoRelatorio.split("\n");
-
-                for(String linha : linhas){
+                for (String linha : linhas) {
                     contentStream.showText(linha);
                     contentStream.newLineAtOffset(0, -15);
                 }
@@ -166,25 +182,20 @@ public class RelatorioService {
                 contentStream.endText();
             }
 
-            //Salvar Relatório
-            document.save("relatorio_" + + System.currentTimeMillis()+ "pdf");
-            System.out.println("Documento salvo com sucesso.");
-            return Paths.get("relatorio.pdf");
+            Path pastaRelatorios = Paths.get("relatorios");
+            if (!Files.exists(pastaRelatorios)) {
+                Files.createDirectories(pastaRelatorios);
+            }
+            usuario = usuario.replaceAll("[^a-zA-Z0-9_-]", "_");
+
+            String nomeArquivo = usuario + "_" + System.currentTimeMillis() + ".pdf";
+            Path caminhoArquivo = pastaRelatorios.resolve(nomeArquivo);
+
+            document.save(caminhoArquivo.toFile());
+            return caminhoArquivo;
 
         } catch (IOException e) {
-            throw new IOException("Erro ao escrever o relatório:" + e);
+            throw new IOException("Erro ao escrever o relatório: " + e.getMessage());
         }
     }
-
-
-    /*
-
-    buscar o JSON (OK)
-    ler o JSON (OK)
-    buscar os dados no BD MySQL (OK)
-    juntar dados json e mysql (OK)
-    estruturar o texto do relatório (Ok)
-    salvar o PDF
-    enviar o PDF
-    **/
 }

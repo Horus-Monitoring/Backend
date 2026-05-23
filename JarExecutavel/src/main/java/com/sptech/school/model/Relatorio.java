@@ -1,8 +1,8 @@
-package com.sptech.school.service;
+package com.sptech.school.model;
 
 import java.time.LocalDateTime;
 
-public class RelatorioData {
+public class Relatorio {
     // funcionário
     private String nome;
     private String cpf;
@@ -27,23 +27,23 @@ public class RelatorioData {
     private String criticidade;
     private String statusAlerta;
 
-    public RelatorioData() {
+    public Relatorio() {
     }
 
-    public RelatorioData(String nome,
-                         String cpf,
-                         String funcao,
-                         String email,
-                         String razaoSocial,
-                         String hostname,
-                         String macAddress,
-                         String statusServidor,
-                         String tipoComponente,
-                         Double limite,
-                         String unidadeMedida,
-                         LocalDateTime dataAlerta,
-                         String criticidade,
-                         String statusAlerta) {
+    public Relatorio(String nome,
+                     String cpf,
+                     String funcao,
+                     String email,
+                     String razaoSocial,
+                     String hostname,
+                     String macAddress,
+                     String statusServidor,
+                     String tipoComponente,
+                     Double limite,
+                     String unidadeMedida,
+                     LocalDateTime dataAlerta,
+                     String criticidade,
+                     String statusAlerta) {
         this.nome = nome;
         this.cpf = cpf;
         this.funcao = funcao;
@@ -118,7 +118,7 @@ public class RelatorioData {
 
     @Override
     public String toString() {
-        return "RelatorioData{" +
+        return "Relatorio{" +
                 "nome='" + nome + '\'' +
                 ", cpf='" + cpf + '\'' +
                 ", funcao='" + funcao + '\'' +

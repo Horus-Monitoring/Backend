@@ -1,17 +1,16 @@
-package com.sptech.school.service;
+package com.sptech.school.repository;
 
 import com.sptech.school.config.MySQLConnection;
+import com.sptech.school.model.Relatorio;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 public class RelatorioRepository {
-    public List<RelatorioData> buscarDados(String usuario, String hostname) throws SQLException {
-        List<RelatorioData> dadosUsuario = new ArrayList<>();
+    public List<Relatorio> buscarDados(String usuario, String hostname) throws SQLException {
+        List<Relatorio> dadosUsuario = new ArrayList<>();
 
         String mysql = """
                 SELECT f.nome,
@@ -37,7 +36,7 @@ public class RelatorioRepository {
                              ON sc.fk_servidor = s.id_servidor
                         JOIN componente AS c
                              ON c.id_componente = sc.fk_componente
-                        JOIN registro_alerta AS ra
+                        LEFT JOIN registro_alerta AS ra
                              ON ra.fk_componente = c.id_componente
                             AND ra.fk_servidor = s.id_servidor
                         WHERE f.email = ? 
@@ -47,11 +46,19 @@ public class RelatorioRepository {
         try (Connection conexao = MySQLConnection.conectar();
              PreparedStatement ps = conexao.prepareStatement(mysql);
         ){
+
             ps.setString(1, usuario);
             ps.setString(2, hostname);
             ResultSet rs = ps.executeQuery();
+
             while(rs.next()){
-                RelatorioData data = new RelatorioData(
+                Timestamp dataAlertaTs = rs.getTimestamp("data_alerta");
+                LocalDateTime dataAlerta = (dataAlertaTs != null) ? dataAlertaTs.toLocalDateTime() : null;
+
+                String criticidade = rs.getString("criticidade");
+                String statusAlerta = rs.getString("status_alerta");
+
+                Relatorio data = new Relatorio(
                         rs.getString("nome"),
                         rs.getString("cpf"),
                         rs.getString("funcao"),
@@ -63,13 +70,13 @@ public class RelatorioRepository {
                         rs.getString("tipo"),
                         rs.getDouble("limite"),
                         rs.getString("unidade_medida"),
-                        rs.getTimestamp("data_alerta").toLocalDateTime(),
-                        rs.getString("criticidade"),
-                        rs.getString("status_alerta")
+                        dataAlerta, //Tratamento para ausencia de alertas
+                        criticidade != null ? criticidade : "Sem alertas",
+                        statusAlerta != null ? statusAlerta : "N/A"
 
                 );
                 dadosUsuario.add(data);
-                System.out.println(data);
+
             }
             return dadosUsuario;
         } catch (SQLException e) {
@@ -77,3 +84,4 @@ public class RelatorioRepository {
         }
     }
 }
+
