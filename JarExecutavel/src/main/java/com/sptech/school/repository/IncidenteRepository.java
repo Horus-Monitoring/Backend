@@ -1,6 +1,7 @@
 package com.sptech.school.repository;
 
 import com.sptech.school.config.MySQLConnection;
+import com.sptech.school.model.Criticidade;
 import com.sptech.school.model.Incidente;
 
 import java.sql.*;
@@ -17,7 +18,7 @@ public class IncidenteRepository {
             WHERE titulo = ?
             AND fk_servidor = ?
             AND fk_componente = ?
-            AND status_alerta = 'Ativo'
+            AND status_alerta = 'ATIVO'
             """;
 
         try(
@@ -130,7 +131,7 @@ public class IncidenteRepository {
 
             // Se o statusAlerta vier nulo, define como "Ativo" por padrão
             ps.setString(3, incidente.getStatusAlerta() != null ? incidente.getStatusAlerta() : "Ativo");
-            ps.setString(4, incidente.getCriticidade());
+            ps.setString(4, incidente.getCriticidade().name());
 
             // Verificação de segurança para as Foreign Keys (para evitar NullPointerException)
             if (incidente.getFkServidor() != null) {
@@ -163,7 +164,7 @@ public class IncidenteRepository {
         String sql = """
                 SELECT *
                 FROM registro_alerta
-                WHERE status_alerta != 'Resolvido'
+                WHERE status_alerta != 'RESOLVIDO'
                 """;
 
         try(
@@ -193,8 +194,9 @@ public class IncidenteRepository {
                         rs.getString("status_alerta")
                 );
 
+                String crit = rs.getString("criticidade");
                 incidente.setCriticidade(
-                        rs.getString("criticidade")
+                        crit != null ? Criticidade.valueOf(crit) : null
                 );
 
                 Timestamp dataAlerta = rs.getTimestamp("data_alerta");
@@ -234,7 +236,7 @@ public class IncidenteRepository {
 
         String sql = """
                 UPDATE registro_alerta
-                SET status_alerta = 'Resolvido',
+                SET status_alerta = 'RESOLVIDO',
                     data_resolucao = CURRENT_TIMESTAMP
                 WHERE chave = ?
                 """;

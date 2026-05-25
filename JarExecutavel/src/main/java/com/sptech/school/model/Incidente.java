@@ -1,6 +1,7 @@
 package com.sptech.school.model;
 
 import java.time.LocalDateTime;
+import com.sptech.school.model.Criticidade;
 
 public class Incidente {
 
@@ -8,7 +9,7 @@ public class Incidente {
     private String chave;
     private String titulo;
     private String statusAlerta;
-    private String criticidade;
+    private Criticidade criticidade;
     private LocalDateTime dataAlerta;
     private LocalDateTime dataResolucao;
     private String servidor;
@@ -22,7 +23,7 @@ public class Incidente {
     public Incidente() {
     }
 
-    public Incidente(Integer idRegistroAlerta, String chave, String titulo, String statusAlerta, String criticidade, LocalDateTime dataAlerta, LocalDateTime dataResolucao, String servidor, String componente, String jiraKey) {
+    public Incidente(Integer idRegistroAlerta, String chave, String titulo, String statusAlerta, Criticidade criticidade, LocalDateTime dataAlerta, LocalDateTime dataResolucao, String servidor, String componente, Integer fkServidor, Integer fkComponente, String jiraKey) {
         this.idRegistroAlerta = idRegistroAlerta;
         this.chave = chave;
         this.titulo = titulo;
@@ -32,7 +33,22 @@ public class Incidente {
         this.dataResolucao = dataResolucao;
         this.servidor = servidor;
         this.componente = componente;
+        this.fkServidor = fkServidor;
+        this.fkComponente = fkComponente;
         this.jiraKey = jiraKey;
+    }
+
+    public static Criticidade fromString(String valor) {
+        if (valor == null) return null;
+
+        return Criticidade.valueOf(
+                valor.toUpperCase()
+                        .replace("Á","A")
+                        .replace("É","E")
+                        .replace("Í","I")
+                        .replace("Ó","O")
+                        .replace("Ú","U")
+        );
     }
 
     public Integer getIdRegistroAlerta() {
@@ -67,11 +83,11 @@ public class Incidente {
         this.statusAlerta = statusAlerta;
     }
 
-    public String getCriticidade() {
+    public Criticidade getCriticidade() {
         return criticidade;
     }
 
-    public void setCriticidade(String criticidade) {
+    public void setCriticidade(Criticidade criticidade) {
         this.criticidade = criticidade;
     }
 

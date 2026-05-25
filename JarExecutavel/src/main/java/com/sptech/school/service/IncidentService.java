@@ -2,6 +2,7 @@ package com.sptech.school.service;
 
 import com.sptech.school.config.Jira;
 import com.sptech.school.config.Slack;
+import com.sptech.school.model.Criticidade;
 import com.sptech.school.model.Incidente;
 import com.sptech.school.repository.IncidenteRepository;
 import org.json.JSONObject;
@@ -80,7 +81,7 @@ public class IncidentService {
                 String jiraKey = extrairKeyJira(respostaJira);
 
                 incidente.setChave(jiraKey);
-                incidente.setStatusAlerta("Ativo");
+                incidente.setStatusAlerta("ATIVO");
 
                 repository.salvar(incidente);
 
@@ -147,14 +148,15 @@ public class IncidentService {
         }
     }
 
-    private String mapearPrioridade(String criticidade){
+    private String mapearPrioridade(Criticidade criticidade){
 
-        return switch (criticidade.toLowerCase()) {
-            case "crítico" -> "Highest";
-            case "alto" -> "High";
-            case "medio", "médio" -> "Medium";
-            case "baixo" -> "Low";
-            default -> "Lowest";
+        if (criticidade == null) return "Lowest";
+
+        return switch (criticidade) {
+            case CRITICO -> "Highest";
+            case ALTO -> "High";
+            case MEDIO -> "Medium";
+            case BAIXO -> "Low";
         };
     }
 

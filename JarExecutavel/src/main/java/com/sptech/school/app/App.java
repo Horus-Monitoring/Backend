@@ -142,7 +142,7 @@ public class App {
             System.out.println("Varredura concluída.");
 
         } catch (Exception e) {
-            System.err.println("Erro na varredura S3: " + e.getMessage());
+            System.err.println("Erro na varredura S3:");
             e.printStackTrace();
         }
     }

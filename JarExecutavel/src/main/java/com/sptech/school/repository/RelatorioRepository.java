@@ -43,7 +43,7 @@ public class RelatorioRepository {
                             AND ra.fk_servidor = s.id_servidor
                         WHERE f.email = ? 
                             AND s.hostname = ?
-                            AND c.tipo = ?;
+                            AND UPPER(TRIM(c.tipo)) = UPPER(TRIM(?));;
                 """;
 
         try (Connection conexao = MySQLConnection.conectar();
@@ -52,7 +52,7 @@ public class RelatorioRepository {
 
             ps.setString(1, usuario);
             ps.setString(2, hostname);
-            ps.setString(3, tipoComponente.toUpperCase());
+            ps.setString(3, tipoComponente);
             ResultSet rs = ps.executeQuery();
 
             while(rs.next()){
