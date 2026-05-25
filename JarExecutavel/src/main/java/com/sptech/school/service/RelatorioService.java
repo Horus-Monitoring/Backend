@@ -25,14 +25,14 @@ public class RelatorioService {
      */
     public Path BotaoRelatorio(String usuario, String email,
                                String hostname, String mac_address,
-                               Integer id) throws Exception {
+                               Integer id, String tipoComponente) throws Exception {
 
         // Monta o caminho do dashboard no S3
         String chaveS3 = String.format(
                 "client/empresa_%d/%s/dashboard_rede_24h.json", id, mac_address
         );
 
-        return processarRelatorio(email, hostname, chaveS3);
+        return processarRelatorio(email, hostname, chaveS3, tipoComponente);
     }
 
     public JsonNode buscarDashboardDoS3(String chaveS3) throws IOException {
@@ -42,10 +42,12 @@ public class RelatorioService {
     }
 
     public Path processarRelatorio(String usuario, String host,
-                                   String chaveS3) throws Exception {
+                                   String chaveS3,
+                                   String tipoComponente) throws Exception {
         // Busca dados no banco
         RelatorioRepository repo = new RelatorioRepository();
-        List<Relatorio> mysqlDados = repo.buscarDados(usuario, host);
+        List<Relatorio> mysqlDados =
+                repo.buscarDados(usuario, host, tipoComponente);
 
         // Busca o JSON no S3
         JsonNode json = buscarDashboardDoS3(chaveS3);

@@ -25,7 +25,7 @@ public class App {
         // Chamado pelo Node.js via: java -jar relatorio.jar
         //     <usuario> <email> <mac_address> <servidor> <id_empresa>
         // -------------------------------------------------------
-        if (args.length == 5) {
+        if (args.length == 6) {
             modoRelatorio(args);
             return;
         }
@@ -47,12 +47,13 @@ public class App {
         String macAddress = args[2].toLowerCase();
         String servidor   = args[3];
         int    idEmpresa  = Integer.parseInt(args[4]);
+        String tipoComponente =  args[5].toUpperCase();
 
         System.err.println("Gerando relatório para: " + email);
 
         try {
             RelatorioService service = new RelatorioService();
-            Path caminhoPDF = service.BotaoRelatorio(usuario, email, servidor, macAddress, idEmpresa);
+            Path caminhoPDF = service.BotaoRelatorio(usuario, email, servidor, macAddress, idEmpresa, tipoComponente);
 
             // Imprime o caminho absoluto no stdout — o Node.js lê esse valor
             System.out.println(caminhoPDF.toAbsolutePath());

@@ -9,7 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RelatorioRepository {
-    public List<Relatorio> buscarDados(String usuario, String hostname) throws SQLException {
+    public List<Relatorio> buscarDados(String usuario,
+                                       String hostname,
+                                       String tipoComponente) throws SQLException {
         List<Relatorio> dadosUsuario = new ArrayList<>();
 
         String mysql = """
@@ -40,7 +42,8 @@ public class RelatorioRepository {
                              ON ra.fk_componente = c.id_componente
                             AND ra.fk_servidor = s.id_servidor
                         WHERE f.email = ? 
-                            AND s.hostname = ?;
+                            AND s.hostname = ?
+                            AND c.tipo = ?;
                 """;
 
         try (Connection conexao = MySQLConnection.conectar();
@@ -49,6 +52,7 @@ public class RelatorioRepository {
 
             ps.setString(1, usuario);
             ps.setString(2, hostname);
+            ps.setString(3, tipoComponente.toUpperCase());
             ResultSet rs = ps.executeQuery();
 
             while(rs.next()){
