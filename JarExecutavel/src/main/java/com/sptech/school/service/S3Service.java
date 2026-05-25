@@ -58,36 +58,18 @@ public class S3Service {
             throw new RuntimeException("Erro ao processar JSON do S3: " + e.getMessage(), e);
         }
     }
+    public String uploadPdf(String key, byte[] fileBytes) {
 
-    public static void uploadArquivo(String caminhoLocal,
-                                     String chaveS3) {
+        client.putObject(
+                PutObjectRequest.builder()
+                        .bucket(bucket)
+                        .key(key)
+                        .contentType("application/pdf")
+                        .build(),
+                RequestBody.fromBytes(fileBytes)
+        );
 
-        try {
-
-            File arquivo = new File(caminhoLocal);
-
-            PutObjectRequest request =
-                    PutObjectRequest.builder()
-                            .bucket(bucket)
-                            .key(chaveS3)
-                            .build();
-
-            client.putObject(
-                    request,
-                    RequestBody.fromFile(arquivo)
-            );
-
-            System.out.println(
-                    "Upload realizado com sucesso!"
-            );
-
-        } catch (Exception e) {
-
-            System.out.println(
-                    "Erro ao fazer upload: "
-                            + e.getMessage()
-            );
-        }
+        return key;
     }
 
     public String obterConteudoComoString(String chaveS3) {
@@ -222,6 +204,9 @@ public class S3Service {
         }
     }
 
+    public String gerarUrlDownload(String key) {
+        return "https://" + bucket + ".s3.amazonaws.com/" + key;
+    }
 
     public static void arquivoExiste(String chaveS3) {
 

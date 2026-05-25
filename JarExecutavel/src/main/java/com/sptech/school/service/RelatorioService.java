@@ -10,6 +10,7 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.List;
@@ -23,11 +24,10 @@ public class RelatorioService {
      * Ponto de entrada chamado pelo App no modo relatório.
      * Retorna o Path do PDF gerado para que o Node.js possa fazer o download.
      */
-    public Path BotaoRelatorio(String usuario, String email,
-                               String hostname, String mac_address,
-                               Integer id, String tipoComponente) throws Exception {
+    public String BotaoRelatorio(String usuario, String email,
+                                 String hostname, String mac_address,
+                                 Integer id, String tipoComponente) throws Exception {
 
-        // Monta o caminho do dashboard no S3
         String chaveS3 = String.format(
                 "client/empresa_%d/%s/dashboard_rede_24h.json", id, mac_address
         );
@@ -41,18 +41,16 @@ public class RelatorioService {
         return leitor.readTree(jsonContent);
     }
 
-    public Path processarRelatorio(String usuario, String host,
-                                   String chaveS3,
-                                   String tipoComponente) throws Exception {
-        // Busca dados no banco
+    public String processarRelatorio(String usuario, String host,
+                                     String chaveS3,
+                                     String tipoComponente) throws Exception {
+
         RelatorioRepository repo = new RelatorioRepository();
         List<Relatorio> mysqlDados =
                 repo.buscarDados(usuario, host, tipoComponente);
 
-        // Busca o JSON no S3
         JsonNode json = buscarDashboardDoS3(chaveS3);
 
-        // Gera o texto e salva PDF
         String texto = gerarTexto(json, mysqlDados);
 
         return salvarPDF(texto, usuario);
@@ -158,7 +156,7 @@ public class RelatorioService {
         return relatorioFinal.toString().trim();
     }
 
-    public Path salvarPDF(String textoRelatorio, String usuario) throws IOException {
+    public String salvarPDF(String textoRelatorio, String usuario) throws IOException {
 
         try (PDDocument document = new PDDocument()) {
 
@@ -175,29 +173,23 @@ public class RelatorioService {
                 );
                 contentStream.newLineAtOffset(50, 750);
 
-                String[] linhas = textoRelatorio.split("\n");
-                for (String linha : linhas) {
-                    contentStream.showText(linha);
+                for (String linha : textoRelatorio.split("\n")) {
+                    contentStream.showText(linha.length() > 90 ? linha.substring(0, 90) : linha);
                     contentStream.newLineAtOffset(0, -15);
                 }
 
                 contentStream.endText();
             }
 
-            Path pastaRelatorios = Paths.get("relatorios");
-            if (!Files.exists(pastaRelatorios)) {
-                Files.createDirectories(pastaRelatorios);
-            }
-            usuario = usuario.replaceAll("[^a-zA-Z0-9_-]", "_");
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            document.save(baos);
 
-            String nomeArquivo = usuario + "_" + System.currentTimeMillis() + ".pdf";
-            Path caminhoArquivo = pastaRelatorios.resolve(nomeArquivo);
+            byte[] pdfBytes = baos.toByteArray();
 
-            document.save(caminhoArquivo.toFile());
-            return caminhoArquivo;
+            String key = "relatorios/" + usuario + "_" + System.currentTimeMillis() + ".pdf";
 
-        } catch (IOException e) {
-            throw new IOException("Erro ao escrever o relatório: " + e.getMessage());
+            s3Service.uploadPdf(key, pdfBytes);
+
+            return s3Service.gerarUrlDownload(key); // aqui está o contrato final
         }
-    }
-}
+    }}

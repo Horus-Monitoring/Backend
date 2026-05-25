@@ -1,6 +1,7 @@
 package com.sptech.school.repository;
 
 import com.sptech.school.config.MySQLConnection;
+import com.sptech.school.model.Criticidade;
 import com.sptech.school.model.Relatorio;
 
 import java.sql.*;
@@ -23,7 +24,7 @@ public class RelatorioRepository {
                         s.hostname,
                         s.mac_address,
                         s.status_servidor,
-                        c.tipo,
+                        c.tipo AS tipo_componente,
                         sc.limite,
                         sc.unidade_medida,
                         ra.data_alerta,
@@ -43,7 +44,8 @@ public class RelatorioRepository {
                             AND ra.fk_servidor = s.id_servidor
                         WHERE f.email = ? 
                             AND s.hostname = ?
-                            AND UPPER(TRIM(c.tipo)) = UPPER(TRIM(?));;
+                            AND UPPER(TRIM(c.tipo)) = UPPER(TRIM(?))
+                        ORDER BY ra.data_alerta DESC;
                 """;
 
         try (Connection conexao = MySQLConnection.conectar();
@@ -59,7 +61,11 @@ public class RelatorioRepository {
                 Timestamp dataAlertaTs = rs.getTimestamp("data_alerta");
                 LocalDateTime dataAlerta = (dataAlertaTs != null) ? dataAlertaTs.toLocalDateTime() : null;
 
-                String criticidade = rs.getString("criticidade");
+                String rawCrit = rs.getString("criticidade");
+
+                Criticidade criticidade = rawCrit != null
+                        ? Criticidade.valueOf(rawCrit.toUpperCase())
+                        : null;
                 String statusAlerta = rs.getString("status_alerta");
 
                 Relatorio data = new Relatorio(
@@ -71,11 +77,11 @@ public class RelatorioRepository {
                         rs.getString("hostname"),
                         rs.getString("mac_address"),
                         rs.getString("status_servidor"),
-                        rs.getString("tipo"),
+                        rs.getString("tipo_componente"),
                         rs.getDouble("limite"),
                         rs.getString("unidade_medida"),
                         dataAlerta, //Tratamento para ausencia de alertas
-                        criticidade != null ? criticidade : "Sem alertas",
+                        criticidade,
                         statusAlerta != null ? statusAlerta : "N/A"
 
                 );

@@ -24,26 +24,13 @@ public class Relatorio {
 
     // alerta
     private LocalDateTime dataAlerta;
-    private String criticidade;
+    private Criticidade criticidade;
     private String statusAlerta;
 
     public Relatorio() {
     }
 
-    public Relatorio(String nome,
-                     String cpf,
-                     String funcao,
-                     String email,
-                     String razaoSocial,
-                     String hostname,
-                     String macAddress,
-                     String statusServidor,
-                     String tipoComponente,
-                     Double limite,
-                     String unidadeMedida,
-                     LocalDateTime dataAlerta,
-                     String criticidade,
-                     String statusAlerta) {
+    public Relatorio(String nome, String cpf, String funcao, String email, String razaoSocial, String hostname, String macAddress, String statusServidor, String tipoComponente, Double limite, String unidadeMedida, LocalDateTime dataAlerta, Criticidade criticidade, String statusAlerta) {
         this.nome = nome;
         this.cpf = cpf;
         this.funcao = funcao;
@@ -108,7 +95,7 @@ public class Relatorio {
         return dataAlerta;
     }
 
-    public String getCriticidade() {
+    public Criticidade getCriticidade() {
         return criticidade;
     }
 

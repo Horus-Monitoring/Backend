@@ -15,7 +15,7 @@ public class MySQLConnection {
     private static final String PASSWORD = Env.get("DB_PASSWORD");
 
     private static final String URL =
-            "jdbc:mysql://" + HOST + ":" + PORT + "/" + DB;
+            "jdbc:mysql://" + HOST + ":" + PORT + "/" + DB +"?useUnicode=true&characterEncoding=utf8mb4&serverTimezone=UTC";
 
     public static Connection conectar() throws SQLException {
         return DriverManager.getConnection(URL, USER, PASSWORD);
