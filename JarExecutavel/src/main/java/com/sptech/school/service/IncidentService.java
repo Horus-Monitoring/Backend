@@ -153,10 +153,10 @@ public class IncidentService {
         if (criticidade == null) return "Lowest";
 
         return switch (criticidade) {
-            case CRITICO -> "Highest";
-            case ALTO -> "High";
-            case MEDIO -> "Medium";
-            case BAIXO -> "Low";
+            case Critico -> "Highest";
+            case Alto -> "High";
+            case Medio -> "Medium";
+            case Baixo -> "Low";
         };
     }
 

@@ -34,7 +34,7 @@ public class App {
 
         scheduler.scheduleAtFixedRate(
                 App::escanearS3,
-                10,
+                1,
                 60,
                 TimeUnit.MINUTES
         );

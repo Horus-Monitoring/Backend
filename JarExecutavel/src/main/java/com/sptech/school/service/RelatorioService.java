@@ -9,6 +9,7 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
+import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -16,6 +17,7 @@ import java.nio.file.*;
 import java.util.List;
 import java.time.format.DateTimeFormatter;
 
+@Service
 public class RelatorioService {
 
     private final S3Service s3Service = new S3Service();
@@ -25,14 +27,14 @@ public class RelatorioService {
      * Retorna o Path do PDF gerado para que o Node.js possa fazer o download.
      */
     public String BotaoRelatorio(String usuario, String email,
-                                 String hostname, String mac_address,
+                                 String servidor, String mac_address,
                                  Integer id, String tipoComponente) throws Exception {
 
         String chaveS3 = String.format(
                 "client/empresa_%d/%s/dashboard_rede_24h.json", id, mac_address
         );
 
-        return processarRelatorio(email, hostname, chaveS3, tipoComponente);
+        return processarRelatorio(email, servidor, chaveS3, tipoComponente);
     }
 
     public JsonNode buscarDashboardDoS3(String chaveS3) throws IOException {

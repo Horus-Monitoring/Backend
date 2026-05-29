@@ -3,10 +3,10 @@ package com.sptech.school.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 public enum Criticidade {
-    CRITICO,
-    ALTO,
-    MEDIO,
-    BAIXO;
+    Critico,
+    Alto,
+    Medio,
+    Baixo;
 
     Criticidade() {
     }
@@ -18,7 +18,7 @@ public enum Criticidade {
         try {
             return Criticidade.valueOf(value.trim().toUpperCase());
         } catch (Exception e) {
-            return BAIXO; // ou DEFAULT de sua regra
+            return Baixo; // ou DEFAULT de sua regra
         }
     }
 

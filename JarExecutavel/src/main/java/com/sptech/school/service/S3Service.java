@@ -10,7 +10,9 @@ import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
-
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import java.time.Duration;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
@@ -59,7 +61,6 @@ public class S3Service {
         }
     }
     public String uploadPdf(String key, byte[] fileBytes) {
-
         client.putObject(
                 PutObjectRequest.builder()
                         .bucket(bucket)
@@ -68,7 +69,6 @@ public class S3Service {
                         .build(),
                 RequestBody.fromBytes(fileBytes)
         );
-
         return key;
     }
 
@@ -85,6 +85,7 @@ public class S3Service {
             throw new RuntimeException("Erro ao ler arquivo do S3: " + e.getMessage());
         }
     }
+
 
 
     public static void uploadTexto(String conteudo,
@@ -205,7 +206,14 @@ public class S3Service {
     }
 
     public String gerarUrlDownload(String key) {
-        return "https://" + bucket + ".s3.amazonaws.com/" + key;
+        try (S3Presigner presigner = S3Presigner.create()) {
+            GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                    .signatureDuration(Duration.ofMinutes(15))
+                    .getObjectRequest(r -> r.bucket(bucket).key(key))
+                    .build();
+
+            return presigner.presignGetObject(presignRequest).url().toString();
+        }
     }
 
     public static void arquivoExiste(String chaveS3) {
